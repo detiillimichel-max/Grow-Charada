@@ -13,7 +13,7 @@
 **CHARADAS - O Jogo de Tabuleiro** é uma experiência nostálgica que combina o raciocínio das charadas com a diversão dos jogos de tabuleiro tradicionais. Conquiste territórios, ganhe estrelas e torne-se uma lenda!
 
 ### 🎯 Inspiração
-- **Grow**: Banco Imobiliário, War, Detetive
+- **Grow**: Banco Imobiliário,Detetive
 - **Estrela**: Resta Um, Lig-4, Damas
 
 ## ✨ Funcionalidades

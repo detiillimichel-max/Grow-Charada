@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charadas - O Jogo de Tabuleiro | Grow/Estrela Style</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Courier New', 'Segoe UI', 'Monaco', monospace;
+            background: #2c1810;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: radial-gradient(circle at 25% 40%, rgba(139, 69, 19, 0.3) 2%, transparent 2.5%),
+                              radial-gradient(circle at 75% 60%, rgba(160, 82, 45, 0.3) 1.5%, transparent 2%);
+            background-size: 40px 40px, 35px 35px;
+        }
+
+        /* Container estilo caixa de jogo */
+        .game-box {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #f5e6c8;
+            border-radius: 30px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5),
+                        inset 0 1px 0 rgba(255,255,255,0.3);
+            border: 8px solid #8b4513;
+            position: relative;
+        }
+
+        /* Banner estilo tabuleiro */
+        .game-header {
+            background: linear-gradient(135deg, #d4a574, #c49a6c);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 3px solid #8b4513;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1), 0 5px 10px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #2c1810;
+            text-shadow: 3px 3px 0 #ffd700;
+            letter-spacing: 3px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            color: #2c1810;
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        /* Placar estilo jogos Grow */
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: #2c1810;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            color: #ffd700;
+            border: 2px solid #ffd700;
+            box-shadow: 0 4px 0 #5c3310;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        /* Área do tabuleiro (cards) */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+            min-height: 500px;
+        }
+
+        /* Cards estilo peças de tabuleiro */
+        .piece {
+            background: #fff8e7;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid #8b4513;
+            box-shadow: 0 5px 0 #5c3310;
+            position: relative;
+            backdrop-filter: blur(2px);
+        }
+
+        .piece:hover:not(.conquered) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 0 #5c3310;
+            background: #fff4dc;
+        }
+
+        .piece:active:not(.conquered) {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 #5c3310;
+        }
+
+        .piece.conquered {
+            background: linear-gradient(135deg, #90ee90, #6b8e23);
+            cursor: default;
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+
+        .piece-number {
+            display: inline-block;
+            background: #ffd700;
+            color: #2c1810;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border: 1px solid #8b4513;
+        }
+
+        .riddle-text {
+            font-size: 1em;
+            color: #2c1810;
+            margin: 15px 0;
+            line-height: 1.4;
+            font-family: 'Segoe UI', monospace;
+        }
+
+        .answer-box {
+            display: none;
+            margin-top: 15px;
+            padding: 10px;
+            background: #2c1810;
+            color: #ffd700;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .piece.conquered .answer-box {
+            display: block;
+            animation: flip 0.5s ease;
+        }
+
+        @keyframes flip {
+            from { transform: rotateX(-90deg); opacity: 0; }
+            to { transform: rotateX(0); opacity: 1; }
+        }
+
+        .hint {
+            margin-top: 10px;
+            font-size: 0.8em;
+            color: #8b4513;
+            text-align: center;
+        }
+
+        .piece.conquered .hint {
+            display: none;
+        }
+
+        /* Botões estilo Grow */
+        .grow-btn {
+            background: #ffd700;
+            color: #2c1810;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 0 #b8860b;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+
+        .grow-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 #b8860b;
+        }
+
+        .grow-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #b8860b;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        /* Modal Estilo "Regras do Jogo" */
+        .rules-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .rules-content {
+            background: #f5e6c8;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            border: 5px solid #ffd700;
+            position: relative;
+        }
+
+        .close-rules {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        /* Ranking */
+        .ranking {
+            background: #2c1810;
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 20px;
+            color: #ffd700;
+        }
+
+        .ranking h3 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .ranking-list {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .rank-item {
+            background: #5c3310;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #ffd700;
+            font-size: 0.8em;
+        }
+
+        @media (max-width: 768px) {
+            .game-box { padding: 15px; }
+            h1 { font-size: 1.5em; }
+            .stat-value { font-size: 1.5em; }
+        }
+
+        /* Efeito de conquista */
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); background: #ffd700; }
+        }
+
+        .piece.conquered {
+            animation: celebrate 0.6s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-box">
+        <div class="game-header">
+            <h1>🎲 CHARADAS - O JOGO 🎲</h1>
+            <div class="subtitle">⭐ Edição Especial Grow/Estrela ⭐</div>
+            <div class="subtitle">🏆 Desafie seu raciocínio! 🏆</div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-card">
+                <div class="stat-label">🏅 TERRITÓRIOS</div>
+                <div class="stat-value"><span id="score">0</span>/<span id="total">9</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">⭐ ESTRELAS</div>
+                <div class="stat-value" id="stars">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">🎯 MASTER</div>
+                <div class="stat-value" id="rankTitle">Iniciante</div>
+            </div>
+        </div>
+
+        <div class="board" id="board"></div>
+
+        <div class="action-buttons">
+            <button class="grow-btn" id="rulesBtn">📖 REGRAS</button>
+            <button class="grow-btn" id="resetBtn">🔄 NOVO JOGO</button>
+            <button class="grow-btn" id="rankingBtn">🏆 RANKING</button>
+        </div>
+
+        <div class="ranking" id="rankingPanel" style="display: none;">
+            <h3>🏆 TOP 3 JOGADORES 🏆</h3>
+            <div class="ranking-list" id="rankList"></div>
+        </div>
+
+        <footer>
+            <p>© 2025 - Charadas Board Game | Inspirado nos clássicos Grow e Estrela</p>
+            <p>⚡ Conquiste todos os territórios e torne-se um Mestre das Charadas! ⚡</p>
+        </footer>
+    </div>
+
+    <!-- Modal de Regras -->
+    <div id="rulesModal" class="rules-modal">
+        <div class="rules-content">
+            <span class="close-rules" id="closeRules">&times;</span>
+            <h2>📜 REGRAS DO JOGO</h2>
+            <br>
+            <p><strong>🎯 OBJETIVO:</strong> Conquistar todos os 9 territórios (charadas)!</p>
+            <br>
+            <p><strong>⭐ COMO JOGAR:</strong></p>
+            <ul style="margin-left: 20px;">
+                <li>1. Leia a charada de cada território</li>
+                <li>2. Tente adivinhar a resposta</li>
+                <li>3. Clique no card para revelar</li>
+                <li>4. Cada território conquistado = 1 estrela</li>
+                <li>5. Conquiste 9/9 e vire MESTRE!</li>
+            </ul>
+            <br>
+            <p><strong>🏆 RANKINGS:</strong></p>
+            <ul style="margin-left: 20px;">
+                <li>0-3 estrelas: Iniciante</li>
+                <li>4-6 estrelas: Explorador</li>
+                <li>7-8 estrelas: Mestre</li>
+                <li>9 estrelas: Lenda!</li>
+            </ul>
+            <br>
+            <p><em>💡 Dica: Reúna amigos e joguem em turnos!</em></p>
+            <br>
+            <button class="grow-btn" id="closeRulesBtn" style="margin-top: 10px;">ENTENDI!</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DADOS DAS CHARADAS (TERRITÓRIOS) ====================
+        const territories = [
+            { riddle: "O que é, o que é? Tem cabeça mas não pensa, tem boca mas não fala?", answer: "O relógio ⏰", difficulty: "⭐" },
+            { riddle: "O que é, o que é? Quanto mais se tira, maior fica?", answer: "O buraco 🕳️", difficulty: "⭐⭐" },
+            { riddle: "O que é, o que é? Tem dentes mas não come, tem barba mas não é homem?", answer: "O alho 🧄", difficulty: "⭐⭐⭐" },
+            { riddle: "O que é, o que é? Passa pelo mar e não se molha, passa pelo fogo e não se queima?", answer: "A sombra 🌑", difficulty: "⭐⭐" },
+            { riddle: "O que é, o que é? Tem asas mas não voa, tem boca mas não fala, tem patas mas não anda?", answer: "A mesa 🪑", difficulty: "⭐⭐⭐" },
+            { riddle: "O que é, o que é? Cai em pé e corre deitado?", answer: "A chuva 🌧️", difficulty: "⭐" },
+            { riddle: "O que é, o que é? É irmão do pai da minha prima, mas não é meu tio?", answer: "Meu pai 👨", difficulty: "⭐⭐⭐⭐" },
+            { riddle: "O que é, o que é? Entra na água mas não se molha, entra no fogo mas não se queima?", answer: "O gelo 🧊", difficulty: "⭐⭐" },
+            { riddle: "O que é, o que é? Quanto maior menos se vê?", answer: "A escuridão 🌌", difficulty: "⭐⭐⭐⭐" }
+        ];
+
+        // ==================== ESTADO DO JOGO ====================
+        let game = {
+            conquered: new Array(9).fill(false),
+            stars: 0
+        };
+
+        // Ranking local
+        let ranking = [];
+
+        // ==================== ELEMENTOS ====================
+        const board = document.getElementById('board');
+        const scoreSpan = document.getElementById('score');
+        const starsSpan = document.getElementById('stars');
+        const rankTitleSpan = document.getElementById('rankTitle');
+        const resetBtn = document.getElementById('resetBtn');
+        const rulesBtn = document.getElementById('rulesBtn');
+        const rankingBtn = document.getElementById('rankingBtn');
+        const rankingPanel = document.getElementById('rankingPanel');
+        const rulesModal = document.getElementById('rulesModal');
+
+        // ==================== FUNÇÕES ====================
+        function updateUI() {
+            scoreSpan.textContent = game.stars;
+            starsSpan.textContent = '⭐'.repeat(game.stars) + (game.stars < 9 ? '☆'.repeat(9 - game.stars) : '');
+            
+            let title = '';
+            if (game.stars <= 3) title = '🌱 Iniciante';
+            else if (game.stars <= 6) title = '🗺️ Explorador';
+            else if (game.stars <= 8) title = '🏅 Mestre';
+            else title = '👑 LENDA! 👑';
+            
+            rankTitleSpan.textContent = title;
+            
+            saveGame();
+            updateRanking();
+        }
+
+        function saveGame() {
+            localStorage.setItem('charada_board_game', JSON.stringify(game));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('charada_board_game');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    game.conquered = data.conquered || new Array(9).fill(false);
+                    game.stars = data.stars || 0;
+                } catch(e) {}
+            }
+            updateUI();
+        }
+
+        function conquerTerritory(index) {
+            if (!game.conquered[index]) {
+                game.conquered[index] = true;
+                game.stars++;
+                updateUI();
+                renderBoard();
+                
+                // Efeito de conquista sonoro (console)
+                console.log(`🎉 TERRITÓRIO CONQUISTADO! +1 Estrela! 🎉`);
+                
+                if (game.stars === 9) {
+                    setTimeout(() => {
+                        alert('🏆 PARABÉNS! VOCÊ CONQUISTOU TODOS OS TERRITÓRIOS! 🏆\n\nVocê é uma LENDA das Charadas! 👑');
+                        addToRanking();
+                    }, 100);
+                }
+            }
+        }
+
+        function addToRanking() {
+            const playerName = prompt('🏆 NOVO RECORDE! 🏆\n\nDigite seu nome para entrar no Ranking:', 'Mestre');
+            if (playerName && playerName.trim()) {
+                ranking.push({ name: playerName.trim(), stars: game.stars, date: new Date().toLocaleDateString() });
+                ranking.sort((a,b) => b.stars - a.stars);
+                ranking = ranking.slice(0, 5);
+                localStorage.setItem('charada_ranking', JSON.stringify(ranking));
+                updateRanking();
+            }
+        }
+
+        function updateRanking() {
+            const saved = localStorage.getItem('charada_ranking');
+            if (saved) {
+                ranking = JSON.parse(saved);
+            }
+            
+            const rankList = document.getElementById('rankList');
+            if (rankList) {
+                if (ranking.length === 0) {
+                    rankList.innerHTML = '<div class="rank-item">⭐ Ninguém ainda! Jogue e entre no ranking! ⭐</div>';
+                } else {
+                    rankList.innerHTML = ranking.map(r => 
+                        `<div class="rank-item">${r.name} - ${r.stars}⭐ (${r.date})</div>`
+                    ).join('');
+                }
+            }
+        }
+
+        function renderBoard() {
+            board.innerHTML = '';
+            
+            territories.forEach((terr, index) => {
+                const piece = document.createElement('div');
+                piece.className = `piece ${game.conquered[index] ? 'conquered' : ''}`;
+                
+                const difficultyStars = terr.difficulty;
+                
+                piece.innerHTML = `
+                    <div class="piece-number">📍 TERRITÓRIO ${index + 1} ${difficultyStars}</div>
+                    <div class="riddle-text">❓ ${terr.riddle}</div>
+                    <div class="answer-box">
+                        💡 RESPOSTA: ${terr.answer}
+                    </div>
+                    ${!game.conquered[index] ? '<div class="hint">🔍 Clique para conquistar este território!</div>' : '✅ CONQUISTADO!'}
+                `;
+                
+                if (!game.conquered[index]) {
+                    piece.addEventListener('click', () => conquerTerritory(index));
+                }
+                
+                board.appendChild(piece);
+            });
+        }
+
+        function resetGame() {
+            if (confirm('⚠️ ATENÇÃO JOGADOR! ⚠️\n\nReiniciar o jogo fará você perder todas as conquistas.\nDeseja realmente começar do zero?')) {
+                game = {
+                    conquered: new Array(9).fill(false),
+                    stars: 0
+                };
+                updateUI();
+                renderBoard();
+                
+                // Efeito de reset
+                const box = document.querySelector('.game-box');
+                box.style.transform = 'scale(0.98)';
+                setTimeout(() => { box.style.transform = 'scale(1)'; }, 200);
+            }
+        }
+
+        // ==================== MODAIS ====================
+        function showRules() {
+            rulesModal.style.display = 'flex';
+        }
+
+        function closeRules() {
+            rulesModal.style.display = 'none';
+        }
+
+        function toggleRanking() {
+            if (rankingPanel.style.display === 'none') {
+                rankingPanel.style.display = 'block';
+                updateRanking();
+            } else {
+                rankingPanel.style.display = 'none';
+            }
+        }
+
+        // ==================== EVENTOS ====================
+        resetBtn.addEventListener('click', resetGame);
+        rulesBtn.addEventListener('click', showRules);
+        rankingBtn.addEventListener('click', toggleRanking);
+        document.getElementById('closeRules')?.addEventListener('click', closeRules);
+        document.getElementById('closeRulesBtn')?.addEventListener('click', closeRules);
+        
+        window.addEventListener('click', (e) => {
+            if (e.target === rulesModal) closeRules();
+        });
+
+        // ==================== INICIALIZAÇÃO ====================
+        function init() {
+            loadGame();
+            renderBoard();
+            updateRanking();
+            console.log('🎮 CHARADAS BOARD GAME - Modo Grow/Estrela ativado!');
+            console.log('🏆 Conquiste todos os territórios e vire uma lenda! 🏆');
+        }
+
+        init();
+    </script>
+</body>
+</html>
